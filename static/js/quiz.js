@@ -56,7 +56,6 @@ const questions = [
         question: "Imagine you could combine your favorite subject with your hobby—what would that look like?", 
         type: "text" 
     },
-    // Add more questions from the provided list
 ];
 
 let currentQuestion = 0;
