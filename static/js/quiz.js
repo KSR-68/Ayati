@@ -11,7 +11,7 @@ const questions = [
         max: 10
     },
     {
-        question: "Can you describe a recent project or assignment in [subject] that you enjoyed or did well in?",
+        question: "Can you describe a recent project or assignment in any subject that you enjoyed or did well in?",
         type: "text"
     },
     {
@@ -60,7 +60,9 @@ const questions = [
 ];
 
 let currentQuestion = 0;
-let answers = {};
+let answers = {
+    responses: []
+};
 
 document.addEventListener('DOMContentLoaded', function () {
     const nameForm = document.getElementById('nameForm');
@@ -82,9 +84,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const prevBtn = document.getElementById('prev-btn');
 
     nextBtn.addEventListener('click', () => {
+        saveAnswer(currentQuestion);
         if (currentQuestion < questions.length - 1) {
             currentQuestion++;
             showQuestion(currentQuestion);
+        } else {
+            // Send answers to backend
+            submitResponses();
         }
     });
 
@@ -212,4 +218,78 @@ function showQuestion(index) {
             answerOptions.appendChild(scaleContainer2);
             break;
     }
+}
+
+function saveAnswer(questionIndex) {
+    const question = questions[questionIndex];
+    const answerOptions = document.getElementById('answer-options');
+    let response = {
+        question: question.question,
+        type: question.type,
+        answer: null
+    };
+
+    switch (question.type) {
+        case 'multiSelect':
+            response.answer = Array.from(answerOptions.querySelectorAll('.btn.selected'))
+                .map(btn => btn.textContent);
+            break;
+        case 'scale':
+            response.answer = answerOptions.querySelector('.form-range').value;
+            break;
+        case 'text':
+            response.answer = answerOptions.querySelector('textarea').value;
+            break;
+        case 'textplusScale':
+            response.answer = {
+                text: answerOptions.querySelector('textarea').value,
+                scale: answerOptions.querySelector('.form-range').value
+            };
+            break;
+    }
+    answers.responses[questionIndex] = response;
+}
+
+async function submitResponses() {
+    try {
+        // Show loading screen, hide quiz section
+        document.getElementById('quiz-section').classList.add('d-none');
+        document.getElementById('loading-section').classList.remove('d-none');
+        
+        const response = await fetch('/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(answers)
+        });
+        
+        const result = await response.json();
+        
+        // Hide loading screen, show results
+        document.getElementById('loading-section').classList.add('d-none');
+        showResults(result);
+    } catch (error) {
+        console.error('Error:', error);
+        // Hide loading screen, show error message
+        document.getElementById('loading-section').classList.add('d-none');
+        alert('An error occurred while analyzing your responses. Please try again.');
+    }
+}
+
+function showResults(result) {
+    const resultsSection = document.getElementById('results-section');
+    const analysisResult = document.getElementById('analysis-result');
+    
+    resultsSection.classList.remove('d-none');
+    analysisResult.innerHTML = `
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Recommended Career Paths</h5>
+                <div class="card-text">
+                    ${result.suggestion.replace(/\n/g, '<br>')}
+                </div>
+            </div>
+        </div>
+    `;
 }

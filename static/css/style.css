@@ -47,3 +47,16 @@ body {
     background-color: #0d6efd;
     color: white;
 }
+
+#loading-section {
+    padding: 2rem;
+}
+
+#loading-section .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+#loading-section h4 {
+    color: #6c757d;
+}
