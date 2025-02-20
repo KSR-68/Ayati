@@ -1,3 +1,6 @@
+# Attention 
+Chatbot feature is still in development
+
 # Ayati
 AI based Career Counselling ChatBot
 
@@ -41,4 +44,3 @@ pip install -r requirements.txt
 ```sh
 python app.py
 ```
-
