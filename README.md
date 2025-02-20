@@ -24,7 +24,7 @@ Ayati is an intelligent career counselling chatbot that helps users explore care
 ### Setup
 1. Clone the repository
 ```sh
-git clone https://github.com/yourusername/Ayati.git
+git clone https://github.com/KsR-68/Ayati.git
 cd Ayati
 ```
 2. Create a virtual Environment
