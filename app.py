@@ -1,23 +1,17 @@
 from flask import Flask, render_template, request, jsonify
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+import google.generativeai as genai
 
 app = Flask(__name__)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
-# Load the model and tokenizer
-model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float16,
-    device_map="auto",
-)
+
+# Configure Gemini API
+GOOGLE_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
 
 def analyze_responses(responses):
-    # Prepare a more focused prompt
+    # Prepare the prompt
     prompt = """You are a Career Counsellor and You are given some responses from a student. Based on the responses, you need to suggest the most suitable career paths for the student.
-    The respones are as follows:
+    The responses are as follows:
     """
     for response in responses:
         prompt += f"Question: {response['question']}\n"
@@ -31,20 +25,10 @@ def analyze_responses(responses):
     Do not forget to consider the student's interests, skills, and personality traits while suggesting the career paths.
     Do not rewrite the questions asked.
     """
-    # Add parameters to control response length
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    outputs = model.generate(
-        **inputs,
-        max_length=1000,  # Reduced max length
-        min_length=100,  # Added min length
-        num_return_sequences=1,
-        temperature=0.7,
-        do_sample=True,
-        top_p=0.9,
-    )
     
-    suggestion = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return suggestion
+    # Generate response using Gemini
+    response = model.generate_content(prompt)
+    return response.text
 
 @app.route('/')
 def index():
@@ -55,7 +39,7 @@ def analyze():
     data = request.json
     responses = data['responses']
     
-    # Analyze the responses using the model
+    # Analyze the responses using Gemini
     suggestion = analyze_responses(responses)
     
     return jsonify({
