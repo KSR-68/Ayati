@@ -1,34 +1,71 @@
 from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
+import markdown
+import bleach
 
 app = Flask(__name__)
 
 # Configure Gemini API
 GOOGLE_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
+model = genai.GenerativeModel('gemini-2.5-pro-exp-03-25')
 
 def analyze_responses(responses):
-    # Prepare the prompt
-    prompt = """You are a Career Counsellor and You are given some responses from a student. Based on the responses, you need to suggest the most suitable career paths for the student.
-    The responses are as follows:
-    """
-    for response in responses:
-        prompt += f"Question: {response['question']}\n"
-        prompt += f"Answer: {response['answer']}\n\n"
+    # Filter out responses with no answers
+    valid_responses = [r for r in responses if r.get('answer') is not None]
     
-    prompt += """Based on the responses you need to Recommended Career Paths in this format:
-    1. [Career 1] - Brief one-line justification
-    2. [Career 2] - Brief one-line justification
-    3. [Career 3] - Brief one-line justification
+    if not valid_responses:
+        return "Not enough responses to make career suggestions. Please answer the questions."
 
-    Do not forget to consider the student's interests, skills, and personality traits while suggesting the career paths.
-    Do not rewrite the questions asked.
+    prompt = """As a Career Counsellor, analyze these student responses which were conducted on RIASEC type test and suggest suitable career paths.
+    Each response is on a Likert scale of 1-5 (1=Strongly Disagree, 5=Strongly Agree).
+
+    Student's Responses:
     """
     
-    # Generate response using Gemini
+    # Group responses by section
+    sections = {}
+    for response in valid_responses:
+        section = response.get('section', 'Other')
+        if section not in sections:
+            sections[section] = []
+        sections[section].append(response)
+    
+    # Format responses by section
+    for section, resp in sections.items():
+        prompt += f"\n{section}:\n"
+        for r in resp:
+            prompt += f"- {r['question']}: {r['answer']}/5\n"
+    
+    prompt += """
+    Please suggest 3 most suitable career paths based on these responses.
+    Format your response as:
+    
+    1. [Career 1] - [Brief justification based on specific responses]
+    2. [Career 2] - [Brief justification based on specific responses]
+    3. [Career 3] - [Brief justification based on specific responses]
+    """
+    
+    # Generate response from the model
     response = model.generate_content(prompt)
-    return response.text
+    
+    # Convert Markdown to HTML
+    md = markdown.Markdown()
+    html_content = md.convert(response.text)
+    
+    # Configure allowed HTML tags and attributes
+    allowed_tags = ['h1', 'h2', 'ol', 'li', 'p', 'strong', 'em']
+    allowed_attrs = {}
+    
+    # Sanitize HTML
+    clean_html = bleach.clean(
+        html_content,
+        tags=allowed_tags,
+        attributes=allowed_attrs,
+        strip=True
+    )
+    
+    return clean_html
 
 @app.route('/')
 def index():
@@ -39,12 +76,27 @@ def analyze():
     data = request.json
     responses = data['responses']
     
+    # Validate responses
+    if not responses:
+        return jsonify({
+            'error': 'No responses provided',
+            'suggestion': 'Please complete the questionnaire first.'
+        }), 400
+    
+    # Check for valid answers
+    valid_responses = [r for r in responses if r.get('answer') is not None]
+    if len(valid_responses) < 5:  # Minimum required responses
+        return jsonify({
+            'error': 'Insufficient responses',
+            'suggestion': 'Please answer at least 5 questions for meaningful career suggestions.'
+        }), 400
+    
     # Analyze the responses using Gemini
-    suggestion = analyze_responses(responses)
+    suggestion = analyze_responses(valid_responses)
     
     return jsonify({
         'suggestion': suggestion,
-        'responses': responses
+        'responses': valid_responses
     })
 
 if __name__ == '__main__':

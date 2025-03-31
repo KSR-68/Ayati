@@ -1,62 +1,130 @@
 const questions = [
     {
-        question: "Which subjects do you feel most confident in?",
-        type: "multiSelect",
-        options: ["Mathematics", "Science", "English", "Social Studies", "Languages", "Arts"]
+        section: "Interests (RIASEC)",
+        questions: [
+            {
+                question: "I enjoy working with my hands to build or fix things.",
+                type: "likert",
+                category: "Realistic"
+            },
+            {
+                question: "I like to think about how things work and solve puzzles.",
+                type: "likert",
+                category: "Investigative"
+            },
+            {
+                question: "I enjoy creating art, music, or writing stories.",
+                type: "likert",
+                category: "Artistic"
+            },
+            {
+                question: "I like helping people and working with others.",
+                type: "likert",
+                category: "Social"
+            },
+            {
+                question: "I am good at persuading others and taking charge.",
+                type: "likert",
+                category: "Enterprising"
+            },
+            {
+                question: "I prefer tasks that are organized and follow clear rules.",
+                type: "likert",
+                category: "Conventional"
+            }
+        ]
     },
     {
-        question: "How would you rate your skills in Mathematics?",
-        type: "scale",
-        min: 1,
-        max: 10
+        section: "Personality Traits",
+        questions: [
+            {
+                question: "I feel comfortable talking to new people.",
+                type: "likert",
+                category: "Extroversion"
+            },
+            {
+                question: "I enjoy being part of group activities.",
+                type: "likert",
+                category: "Extroversion"
+            },
+            {
+                question: "I always finish my homework on time.",
+                type: "likert",
+                category: "Conscientiousness"
+            },
+            {
+                question: "I keep my things neat and organized.",
+                type: "likert",
+                category: "Conscientiousness"
+            },
+            {
+                question: "I like learning about different cultures and ideas.",
+                type: "likert",
+                category: "Openness"
+            },
+            {
+                question: "I enjoy trying new foods or activities.",
+                type: "likert",
+                category: "Openness"
+            }
+        ]
     },
     {
-        question: "Can you describe a recent project or assignment in any subject that you enjoyed or did well in?",
-        type: "text"
+        section: "Values",
+        questions: [
+            {
+                question: "I want a career where I can be creative and innovative.",
+                type: "likert",
+                category: "Values"
+            },
+            {
+                question: "I prefer a job that involves working with people rather than alone.",
+                type: "likert",
+                category: "Values"
+            },
+            {
+                question: "I value having a stable and secure job.",
+                type: "likert",
+                category: "Values"
+            },
+            {
+                question: "I want my work to make a difference in the world.",
+                type: "likert",
+                category: "Values"
+            }
+        ]
     },
     {
-        question: "How comfortable are you with solving problems or experiments in Mathematics/Science? Can you give an example of a problem or experiment you enjoyed?",
-        type: "textplusScale",
-        min: 1,
-        max: 10
-    },
-    {
-        question: "How do you feel about reading, writing, or discussing topics in English or Social Studies? What topics excite you the most?",
-        type: "text"
-    },
-    {
-        question: "Do you enjoy solving puzzles, riddles, or logical problems? Can you share an example of a puzzle or problem you found interesting?",
-        type: "text"
-    },
-    { 
-        question: "What do you enjoy doing in your free time?", 
-        type: "text" 
-    },
-    {
-        question: "Are there any activities you regularly participate in outside of school (e.g., sports, music, art, coding, drama)?",
-        type: "text"
-    },
-    {
-        question: "Have you ever been a part of any clubs, teams, or extracurricular groups? If yes, what role did you play and what did you learn?",
-        type: "text"
-    },
-    {
-        question: "Do you have any creative hobbies like painting, writing, or playing an instrument? What do you enjoy about these activities?",
-        type: "text"
-    },
-    { 
-        question: "Is there a subject or hobby you wish to learn more about even if it's not part of your school curriculum? Why?", 
-        type: "text" 
-    },
-    { 
-        question: "How do you think your favorite school subject or activity relates to what you enjoy doing outside school?", 
-        type: "text" 
-    },
-    { 
-        question: "Imagine you could combine your favorite subject with your hobby—what would that look like?", 
-        type: "text" 
-    },
+        section: "Self-Assessed Skills",
+        questions: [
+            {
+                question: "I am good at math and enjoy solving problems.",
+                type: "likert",
+                category: "Skills"
+            },
+            {
+                question: "I can easily understand and remember what I read.",
+                type: "likert",
+                category: "Skills"
+            },
+            {
+                question: "I have good coordination and can do well in sports or crafts.",
+                type: "likert",
+                category: "Skills"
+            },
+            {
+                question: "I am comfortable using computers and learning new software.",
+                type: "likert",
+                category: "Skills"
+            }
+        ]
+    }
 ];
+
+// Flatten the questions array for easier navigation
+const flattenedQuestions = questions.reduce((acc, section) => {
+    return acc.concat(section.questions.map(q => ({...q, section: section.section})));
+}, []);
 
 let currentQuestion = 0;
 let answers = {
@@ -84,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     nextBtn.addEventListener('click', () => {
         saveAnswer(currentQuestion);
-        if (currentQuestion < questions.length - 1) {
+        if (currentQuestion < flattenedQuestions.length - 1) {
             currentQuestion++;
             showQuestion(currentQuestion);
         } else {
@@ -102,151 +170,117 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function showQuestion(index) {
-    const question = questions[index];
+    if (index >= flattenedQuestions.length) return;
+    
+    const question = flattenedQuestions[index];
     const questionText = document.getElementById('question-text');
     const answerOptions = document.getElementById('answer-options');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const progressBar = document.getElementById('progress-bar');
+    const sectionHeader = document.getElementById('section-header');
 
+    // Update section header
+    if (index === 0 || flattenedQuestions[index - 1].section !== question.section) {
+        sectionHeader.textContent = question.section;
+        sectionHeader.style.display = 'block';
+    } else {
+        sectionHeader.style.display = 'none';
+    }
+
+    // Update question text
     questionText.textContent = question.question;
+
+    // Clear previous answer options
     answerOptions.innerHTML = '';
 
+    // Create question container
+    const questionContainer = document.createElement('div');
+    questionContainer.className = 'question-container';
+
+    // Create Likert scale container
+    const likertContainer = document.createElement('div');
+    likertContainer.className = 'likert-container d-flex justify-content-between align-items-start';
+
+    const likertOptions = [
+        { value: 1, label: 'Strongly Disagree' },
+        { value: 2, label: 'Disagree' },
+        { value: 3, label: 'Neutral' },
+        { value: 4, label: 'Agree' },
+        { value: 5, label: 'Strongly Agree' }
+    ];
+
+    likertOptions.forEach(option => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'likert-option';
+
+        const button = document.createElement('button');
+        button.className = 'likert-button';
+        button.setAttribute('type', 'button');
+        
+        // Check if this option was previously selected
+        const previousAnswer = answers.responses[index]?.answer;
+        if (previousAnswer === option.value) {
+            button.classList.add('selected');
+        }
+
+        button.innerHTML = `<span>${option.value}</span>`;
+        
+        button.onclick = (e) => {
+            // Remove selected class from all buttons
+            likertContainer.querySelectorAll('.likert-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            // Add selected class to clicked button
+            button.classList.add('selected');
+        };
+
+        const label = document.createElement('div');
+        label.className = 'likert-label';
+        label.textContent = option.label;
+
+        optionDiv.appendChild(button);
+        optionDiv.appendChild(label);
+        likertContainer.appendChild(optionDiv);
+    });
+
+    questionContainer.appendChild(likertContainer);
+    answerOptions.appendChild(questionContainer);
+
     // Update progress bar
-    const progress = ((index + 1) / questions.length) * 100;
+    const progress = ((index + 1) / flattenedQuestions.length) * 100;
     progressBar.style.width = `${progress}%`;
+    progressBar.setAttribute('aria-valuenow', progress);
 
     // Update navigation buttons
     prevBtn.disabled = index === 0;
-    nextBtn.textContent = index === questions.length - 1 ? 'Finish' : 'Next';
-
-    // Create appropriate input based on question type
-    switch (question.type) {
-        case 'multiSelect':
-            question.options.forEach(option => {
-                const button = document.createElement('button');
-                button.className = 'btn btn-outline-secondary mb-2';
-                button.textContent = option;
-                button.onclick = () => {
-                    button.classList.toggle('selected');
-                };
-                answerOptions.appendChild(button);
-            });
-            break;
-        case 'scale':
-            const scaleContainer = document.createElement('div');
-            scaleContainer.className = 'scale-container mt-3';
-            
-            const rangeLabels = document.createElement('div');
-            rangeLabels.className = 'd-flex justify-content-between mb-2';
-            
-            const minLabel = document.createElement('span');
-            minLabel.textContent = 'Low';
-            const maxLabel = document.createElement('span');
-            maxLabel.textContent = 'High';
-            
-            rangeLabels.appendChild(minLabel);
-            rangeLabels.appendChild(maxLabel);
-            
-            const rangeInput = document.createElement('input');
-            rangeInput.type = 'range';
-            rangeInput.min = question.min;
-            rangeInput.max = question.max;
-            rangeInput.value = Math.floor((question.max - question.min) / 2);
-            rangeInput.className = 'form-range';
-            
-            const rangeValue = document.createElement('div');
-            rangeValue.className = 'text-center mt-2';
-            rangeValue.textContent = `Selected value: ${rangeInput.value}`;
-            
-            scaleContainer.appendChild(rangeLabels);
-            scaleContainer.appendChild(rangeInput);
-            scaleContainer.appendChild(rangeValue);
-            
-            rangeInput.addEventListener('input', () => {
-                rangeValue.textContent = `Selected value: ${rangeInput.value}`;
-            });
-            
-            answerOptions.appendChild(scaleContainer);
-            break;
-        case 'text':
-            const textArea = document.createElement('textarea');
-            textArea.className = 'form-control';
-            textArea.rows = 4;
-            answerOptions.appendChild(textArea);
-            break;
-        case 'textplusScale':
-            const textArea2 = document.createElement('textarea');
-            textArea2.className = 'form-control mb-3';
-            textArea2.rows = 4;
-            answerOptions.appendChild(textArea2);
-
-            const scaleContainer2 = document.createElement('div');
-            scaleContainer2.className = 'scale-container mt-3';
-            
-            const rangeLabels2 = document.createElement('div');
-            rangeLabels2.className = 'd-flex justify-content-between mb-2';
-            
-            const minLabel2 = document.createElement('span');
-            minLabel2.textContent = 'Low';
-            const maxLabel2 = document.createElement('span');
-            maxLabel2.textContent = 'High';
-            
-            rangeLabels2.appendChild(minLabel2);
-            rangeLabels2.appendChild(maxLabel2);
-            
-            const rangeInput2 = document.createElement('input');
-            rangeInput2.type = 'range';
-            rangeInput2.min = question.min;
-            rangeInput2.max = question.max;
-            rangeInput2.value = Math.floor((question.max - question.min) / 2);
-            rangeInput2.className = 'form-range';
-            
-            const rangeValue2 = document.createElement('div');
-            rangeValue2.className = 'text-center mt-2';
-            rangeValue2.textContent = `Selected value: ${rangeInput2.value}`;
-            
-            scaleContainer2.appendChild(rangeLabels2);
-            scaleContainer2.appendChild(rangeInput2);
-            scaleContainer2.appendChild(rangeValue2);
-            
-            rangeInput2.addEventListener('input', () => {
-                rangeValue2.textContent = `Selected value: ${rangeInput2.value}`;
-            });
-            
-            answerOptions.appendChild(scaleContainer2);
-            break;
-    }
+    nextBtn.textContent = index === flattenedQuestions.length - 1 ? 'Finish' : 'Next';
 }
 
 function saveAnswer(questionIndex) {
-    const question = questions[questionIndex];
+    const question = flattenedQuestions[questionIndex];
     const answerOptions = document.getElementById('answer-options');
+    
     let response = {
+        section: question.section,
         question: question.question,
+        category: question.category,
         type: question.type,
         answer: null
     };
 
-    switch (question.type) {
-        case 'multiSelect':
-            response.answer = Array.from(answerOptions.querySelectorAll('.btn.selected'))
-                .map(btn => btn.textContent);
-            break;
-        case 'scale':
-            response.answer = answerOptions.querySelector('.form-range').value;
-            break;
-        case 'text':
-            response.answer = answerOptions.querySelector('textarea').value;
-            break;
-        case 'textplusScale':
-            response.answer = {
-                text: answerOptions.querySelector('textarea').value,
-                scale: answerOptions.querySelector('.form-range').value
-            };
-            break;
+    const selectedButton = answerOptions.querySelector('.likert-button.selected');
+    if (selectedButton) {
+        response.answer = parseInt(selectedButton.textContent);
+    } else {
+        // Don't save if no answer is selected
+        return;
     }
-    answers.responses[questionIndex] = response;
+
+    // Only save valid responses
+    if (response.answer !== null) {
+        answers.responses[questionIndex] = response;
+    }
 }
 
 async function submitResponses() {
