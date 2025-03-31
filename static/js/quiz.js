@@ -291,4 +291,6 @@ function showResults(result) {
             </div>
         </div>
     `;
+
+    document.getElementById('start-chat-btn').addEventListener('click', startChatBot);
 }

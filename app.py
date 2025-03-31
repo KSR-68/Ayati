@@ -4,7 +4,7 @@ import google.generativeai as genai
 app = Flask(__name__)
 
 # Configure Gemini API
-GOOGLE_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
+GOOGLE_API_KEY = "AIzaSyCTn4GVmaBZQJkjnnp_6C70SwbBhuLO4oA"  
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
 
@@ -26,7 +26,6 @@ def analyze_responses(responses):
     Do not rewrite the questions asked.
     """
     
-    # Generate response using Gemini
     response = model.generate_content(prompt)
     return response.text
 
@@ -38,14 +37,29 @@ def index():
 def analyze():
     data = request.json
     responses = data['responses']
-    
-    # Analyze the responses using Gemini
+
     suggestion = analyze_responses(responses)
     
     return jsonify({
         'suggestion': suggestion,
         'responses': responses
     })
+    
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_message = data.get('message', '')
+    quiz_responses = data.get('quizResponses', []) 
+ 
+    context = "Here are the student's quiz responses:\n"
+    for response in quiz_responses:
+        context += f"**Question:** {response.get('question')}\n"
+        context += f"**Answer:** {response.get('answer')}\n\n"
+
+    prompt = f"{context}Now respond to the following message:\n\n{user_message}"
+    response = model.generate_content(prompt)
+
+    return jsonify({'reply': response.text})
 
 if __name__ == '__main__':
     app.run(debug=True)
