@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
 import markdown
 import bleach
-
+import os
+from dotenv import load_dotenv
 app = Flask(__name__)
-
+load_dotenv()
 # Configure Gemini API
-GOOGLE_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')  # Replace with your actual API key
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-2.5-pro-exp-03-25')
+model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 def analyze_responses(responses):
     # Filter out responses with no answers

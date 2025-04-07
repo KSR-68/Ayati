@@ -118,6 +118,51 @@ const questions = [
                 category: "Skills"
             }
         ]
+    },
+    {
+        section: "Profile Questions",
+        questions: [
+            {
+                question: "What Do you Enjoy Doing in your free Time?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "Are there any activities you regularly participate in or outside schools?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "Do you have creative hobbies like painting, dance, music etc. If you have then what do you enjoy about them?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "Is there is anything you want to learn about which you find interesting and it is not part of your school curriculum?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "What are your favourite subjects in School and Why do find them Favourite?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "What are the things you're most curious about?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "What drives you and Inspires you?",
+                type: "text",
+                category: "Profile"
+            },
+            {
+                question: "What is your Dream, what is your long term goal?",
+                type: "text",
+                category: "Profile"
+            }
+        ]
     }
 ];
 
@@ -198,53 +243,69 @@ function showQuestion(index) {
     const questionContainer = document.createElement('div');
     questionContainer.className = 'question-container';
 
-    // Create Likert scale container
-    const likertContainer = document.createElement('div');
-    likertContainer.className = 'likert-container d-flex justify-content-between align-items-start';
+    if (question.type === 'likert') {
+        // Create Likert scale container
+        const likertContainer = document.createElement('div');
+        likertContainer.className = 'likert-container d-flex justify-content-between align-items-start';
 
-    const likertOptions = [
-        { value: 1, label: 'Strongly Disagree' },
-        { value: 2, label: 'Disagree' },
-        { value: 3, label: 'Neutral' },
-        { value: 4, label: 'Agree' },
-        { value: 5, label: 'Strongly Agree' }
-    ];
+        const likertOptions = [
+            { value: 1, label: 'Strongly Disagree' },
+            { value: 2, label: 'Disagree' },
+            { value: 3, label: 'Neutral' },
+            { value: 4, label: 'Agree' },
+            { value: 5, label: 'Strongly Agree' }
+        ];
 
-    likertOptions.forEach(option => {
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'likert-option';
+        likertOptions.forEach(option => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'likert-option';
 
-        const button = document.createElement('button');
-        button.className = 'likert-button';
-        button.setAttribute('type', 'button');
+            const button = document.createElement('button');
+            button.className = 'likert-button';
+            button.setAttribute('type', 'button');
+            
+            // Check if this option was previously selected
+            const previousAnswer = answers.responses[index]?.answer;
+            if (previousAnswer === option.value) {
+                button.classList.add('selected');
+            }
+
+            button.innerHTML = `<span>${option.value}</span>`;
+            
+            button.onclick = (e) => {
+                // Remove selected class from all buttons
+                likertContainer.querySelectorAll('.likert-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                // Add selected class to clicked button
+                button.classList.add('selected');
+            };
+
+            const label = document.createElement('div');
+            label.className = 'likert-label';
+            label.textContent = option.label;
+
+            optionDiv.appendChild(button);
+            optionDiv.appendChild(label);
+            likertContainer.appendChild(optionDiv);
+        });
+
+        questionContainer.appendChild(likertContainer);
+    } else if (question.type === 'text') {
+        const textArea = document.createElement('textarea');
+        textArea.className = 'form-control profile-answer';
+        textArea.rows = 4;
+        textArea.placeholder = 'Type your answer here...';
         
-        // Check if this option was previously selected
+        // Load previous answer if exists
         const previousAnswer = answers.responses[index]?.answer;
-        if (previousAnswer === option.value) {
-            button.classList.add('selected');
+        if (previousAnswer) {
+            textArea.value = previousAnswer;
         }
 
-        button.innerHTML = `<span>${option.value}</span>`;
-        
-        button.onclick = (e) => {
-            // Remove selected class from all buttons
-            likertContainer.querySelectorAll('.likert-button').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            // Add selected class to clicked button
-            button.classList.add('selected');
-        };
+        questionContainer.appendChild(textArea);
+    }
 
-        const label = document.createElement('div');
-        label.className = 'likert-label';
-        label.textContent = option.label;
-
-        optionDiv.appendChild(button);
-        optionDiv.appendChild(label);
-        likertContainer.appendChild(optionDiv);
-    });
-
-    questionContainer.appendChild(likertContainer);
     answerOptions.appendChild(questionContainer);
 
     // Update progress bar
@@ -269,12 +330,16 @@ function saveAnswer(questionIndex) {
         answer: null
     };
 
-    const selectedButton = answerOptions.querySelector('.likert-button.selected');
-    if (selectedButton) {
-        response.answer = parseInt(selectedButton.textContent);
-    } else {
-        // Don't save if no answer is selected
-        return;
+    if (question.type === 'likert') {
+        const selectedButton = answerOptions.querySelector('.likert-button.selected');
+        if (selectedButton) {
+            response.answer = parseInt(selectedButton.textContent);
+        }
+    } else if (question.type === 'text') {
+        const textArea = answerOptions.querySelector('.profile-answer');
+        if (textArea) {
+            response.answer = textArea.value.trim();
+        }
     }
 
     // Only save valid responses
